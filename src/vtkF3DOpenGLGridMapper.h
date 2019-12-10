@@ -11,6 +11,7 @@
 
 #include <vtkOpenGLPolyDataMapper.h>
 #include <vtkSmartPointer.h>
+#include <vtkTextureObject.h>
 
 class vtkF3DOpenGLGridMapper : public vtkOpenGLPolyDataMapper
 {
@@ -26,6 +27,12 @@ public:
   vtkGetMacro(UnitSquare, double);
 
   double* GetBounds() override;
+
+  vtkSetSmartPointerMacro(ReflectionColorTexture, vtkTextureObject);
+  vtkGetSmartPointerMacro(ReflectionColorTexture, vtkTextureObject);
+
+  vtkSetSmartPointerMacro(ReflectionDepthTexture, vtkTextureObject);
+  vtkGetSmartPointerMacro(ReflectionDepthTexture, vtkTextureObject);
 
 protected:
   vtkF3DOpenGLGridMapper();
@@ -46,6 +53,9 @@ protected:
 
   double FadeDistance = 10.0;
   double UnitSquare = 1.0;
+
+  vtkSmartPointer<vtkTextureObject> ReflectionColorTexture;
+  vtkSmartPointer<vtkTextureObject> ReflectionDepthTexture;
 
 private:
   vtkF3DOpenGLGridMapper(const vtkF3DOpenGLGridMapper&) = delete;

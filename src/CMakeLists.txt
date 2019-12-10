@@ -9,6 +9,7 @@ add_executable(f3d
   vtkF3DInteractor.cxx
   vtkF3DMetaReader.cxx
   vtkF3DOpenGLGridMapper.cxx
+  vtkPlanarReflectionPass.cxx
   F3DLoader.cxx
   F3DLog.cxx
   F3DOptions.cxx

@@ -20,6 +20,7 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextActor.h>
+#include <vtkTextureObject.h>
 
 #include <vtk_glew.h>
 
@@ -75,6 +76,9 @@ protected:
   vtkNew<vtkOrientationMarkerWidget> AxisWidget;
   vtkNew<vtkRenderWindowInteractor> RenderWindowInteractor;
   vtkNew<vtkF3DInteractor> InteractorStyle;
+
+  vtkNew<vtkTextureObject> ReflectionColorTexture;
+  vtkNew<vtkTextureObject> ReflectionDepthTexture;
 
   vtkNew<vtkTextActor> TimerActor;
   GLuint Timer;

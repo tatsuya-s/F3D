@@ -3,6 +3,7 @@
 #include "F3DOptions.h"
 
 #include "vtkF3DOpenGLGridMapper.h"
+#include "vtkPlanarReflectionPass.h"
 
 #include <vtkActor.h>
 #include <vtkActor2DCollection.h>
@@ -240,17 +241,66 @@ void F3DViewer::SetupRenderPasses()
   vtkNew<vtkCameraPass> cameraP;
   cameraP->SetDelegatePass(sequence);
 
+  vtkNew<vtkRenderPassCollection> finalCollection;
+
+  if (true /*reflection*/)
+  {
+    vtkNew<vtkRenderPassCollection> reflCollection;
+    reflCollection->AddItem(lightsP);
+
+    vtkNew<vtkCameraPass> camReflPass;
+    camReflPass->SetDelegatePass(opaqueP);
+
+    vtkNew<vtkPlanarReflectionPass> planarReflection;
+    planarReflection->SetOpaquePass(camReflPass);
+    planarReflection->SetColorTexture(this->ReflectionColorTexture);
+    planarReflection->SetDepthTexture(this->ReflectionDepthTexture);
+
+    double bounds[6];
+    this->Renderer->ComputeVisiblePropBounds(bounds);
+
+    vtkBoundingBox bbox(bounds);
+
+    if (bbox.IsValid())
+    {
+      double diag = bbox.GetDiagonalLength();
+      double unitSquare = pow(10.0, round(log10(diag * 0.1)));
+
+      double gridX = 0.5 * (bounds[0] + bounds[1]);
+      double gridY = bounds[2];
+      double gridZ = 0.5 * (bounds[4] + bounds[5]);
+
+      vtkNew<vtkPlane> plane;
+      plane->SetOrigin(gridX, gridY, gridZ);
+      plane->SetNormal(0.0, 1.0, 0.0);
+
+      planarReflection->SetPlane(plane);
+    }
+
+    reflCollection->AddItem(planarReflection);
+
+    vtkNew<vtkSequencePass> reflSequence;
+    reflSequence->SetPasses(reflCollection);
+
+    finalCollection->AddItem(reflSequence);
+  }
+
   if (this->Options->FXAA)
   {
     vtkNew<vtkOpenGLFXAAPass> fxaaP;
     fxaaP->SetDelegatePass(cameraP);
 
-    renderer->SetPass(fxaaP);
+    finalCollection->AddItem(fxaaP);
   }
   else
   {
-    renderer->SetPass(cameraP);
+    finalCollection->AddItem(cameraP);
   }
+
+  vtkNew<vtkSequencePass> finalSequence;
+  finalSequence->SetPasses(finalCollection);
+
+  renderer->SetPass(finalSequence);
 }
 
 //----------------------------------------------------------------------------
@@ -288,6 +338,8 @@ void F3DViewer::ShowGrid(bool show)
     vtkNew<vtkF3DOpenGLGridMapper> gridMapper;
     gridMapper->SetFadeDistance(diag);
     gridMapper->SetUnitSquare(unitSquare);
+    gridMapper->SetReflectionColorTexture(this->ReflectionColorTexture);
+    gridMapper->SetReflectionDepthTexture(this->ReflectionDepthTexture);
 
     this->GridActor->GetProperty()->SetColor(0.0, 0.0, 0.0);
     this->GridActor->ForceTranslucentOn();
