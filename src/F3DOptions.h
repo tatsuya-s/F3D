@@ -44,10 +44,15 @@ struct F3DOptions
   double CameraViewAngle;
   double Metallic = 0.0;
   double Opacity = 1.0;
+  double IOR = 1.5;
   double PointSize = 10.0;
   double LineWidth = 1.0;
   double RefThreshold = 0.1;
   double Roughness = 0.3;
+  double CoatStrength = 0.0;
+  double CoatIOR = 1.5;
+  double CoatRoughness = 0.0;
+  double CoatThickness = 1.0;
   int Component = -1;
   int Samples = 5;
   std::string Output = "";
@@ -61,6 +66,7 @@ struct F3DOptions
     1.0, 1.0, 1.0, 1.0 };
   std::vector<double> Range;
   std::vector<double> SolidColor = { 1., 1., 1. };
+  std::vector<double> CoatColor = { 1., 1., 1. };
   std::vector<int> WindowSize = { 1000, 600 };
   std::string HDRIFile;
   std::string BaseColorTex;
@@ -69,6 +75,8 @@ struct F3DOptions
   std::vector<double> EmissiveFactor = { 1., 1., 1. };
   std::string NormalTex;
   double NormalScale = 1.0;
+  std::string CoatNormalTex;
+  double CoatNormalScale = 1.0;
 };
 
 class F3DOptionsParser

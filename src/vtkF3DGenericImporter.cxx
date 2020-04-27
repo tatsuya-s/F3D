@@ -350,6 +350,12 @@ void vtkF3DGenericImporter::ImportActors(vtkRenderer* ren)
   this->GeometryActor->GetProperty()->SetMetallic(this->Options->Metallic);
   this->GeometryActor->GetProperty()->SetPointSize(this->Options->PointSize);
   this->GeometryActor->GetProperty()->SetLineWidth(this->Options->LineWidth);
+  this->GeometryActor->GetProperty()->SetBaseIOR(this->Options->IOR);
+  this->GeometryActor->GetProperty()->SetCoatStrength(this->Options->CoatStrength);
+  this->GeometryActor->GetProperty()->SetCoatIOR(this->Options->CoatIOR);
+  this->GeometryActor->GetProperty()->SetCoatRoughness(this->Options->CoatRoughness);
+  this->GeometryActor->GetProperty()->SetCoatColor(this->Options->CoatColor.data());
+  this->GeometryActor->GetProperty()->SetCoatThickness(this->Options->CoatThickness);
 
   this->PointSpritesActor->SetMapper(this->PointGaussianMapper);
   this->PointSpritesActor->GetProperty()->SetColor(col);
@@ -364,6 +370,8 @@ void vtkF3DGenericImporter::ImportActors(vtkRenderer* ren)
   this->GeometryActor->GetProperty()->SetEmissiveFactor(this->Options->EmissiveFactor.data());
   this->GeometryActor->GetProperty()->SetNormalTexture(this->GetTexture(this->Options->NormalTex));
   this->GeometryActor->GetProperty()->SetNormalScale(this->Options->NormalScale);
+  this->GeometryActor->GetProperty()->SetCoatNormalTexture(this->GetTexture(this->Options->CoatNormalTex));
+  this->GeometryActor->GetProperty()->SetCoatNormalScale(this->Options->CoatNormalScale);
 
   // add props
   ren->AddActor(this->GeometryActor);
@@ -394,6 +402,7 @@ vtkSmartPointer<vtkTexture> vtkF3DGenericImporter::GetTexture(
         texture->UseSRGBColorSpaceOn();
       }
       texture->InterpolateOn();
+      texture->MipmapOn();
       return texture;
     }
     else

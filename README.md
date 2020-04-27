@@ -88,6 +88,7 @@ Options|Description
 ## Material options
 Options|Default|Description
 ------|------|------
+
 -o, \-\-point-sprites||Show sphere *points sprites* instead of the geometry.
 \-\-point-size|10.0|Set the *size* of points when showing vertices and point sprites.
 \-\-line-width|1.0|Set the *width* of lines when showing edges.
@@ -102,6 +103,28 @@ Options|Default|Description
 \-\-emissive-factor=&lt;R,G,B&gt;|1.0, 1.0, 1.0| Emissive factor. This value is multiplied with the emissive color when an emissive texture is present.
 \-\-texture-normal=&lt;file path&gt;||Path to a texture file that sets the normal map of the object.
 \-\-normal-scale=&lt;normal_scale&gt;|1.0|Normal scale affects the strength of the normal deviation from the normal texture.
+
+-o, --point-sprites||Show sphere *points sprites* instead of the geometry.
+--point-size|10.0|Set the *size* of points when showing vertices and point sprites.
+--line-width|1.0|Set the *width* of lines when showing edges.
+--color=\<R,G,B\>|1.0, 1.0, 1.0| Set a *color* on the geometry.<br>This only makes sense when using the default scene.
+--opacity=\<opacity\>|1.0|Set *opacity* on the geometry.<br>This only makes sense when using the default scene. Usually used with Depth Peeling option.
+--roughness=\<roughness\>|0.3|Set the *roughness coefficient* on the geometry (0.0-1.0).<br>This only makes sense when using the default scene.
+--metallic=\<metallic\>|0.0|Set the *metallic coefficient* on the geometry (0.0-1.0).<br>This only makes sense when using the default scene.
+--base-ior=\<base_ior>|1.5|Set the *base layer Index Of Refraction* (1.0-6.0).
+--coat-strength=\<coat_strength>|0.5|Set the *coat strength* coefficient (0.0-1.0).
+--coat-ior=\<coat_ior>|1.5|Set the *coat Index Of Refraction* (1.0-6.0).
+--coat-roughness=\<coat_roughness>|0.1|Set the *coat roughness* coefficient (0.0-1.0).
+--coat-color\<R,G,B\>|1.0, 1.0, 1.0|Set the *coat color*.
+--hrdi=\<file path\>||Set the *HDRI* image used to create the environment.<br>The environment act as a light source and is reflected on the material.<br>Valid file format are hdr, png, jpg, pnm, tiff, bmp.
+--texture-base-color=\<file path\>||Path to a texture file that sets the color of the object.
+--texture-material=\<file path\>||Path to a texture file that sets the Occlusion, Roughness and Metallic values of the object.
+--texture-emissive=\<file path\>||Path to a texture file that sets the emited light of the object.
+--emissive-factor=\<R,G,B\>|1.0, 1.0, 1.0| Emissive factor. This value is multiplied with the emissive color when an emissive texture is present.
+--texture-normal=\<file path\>||Path to a texture file that sets the normal map of the object.
+--normal-scale=\<normal_scale\>|1.0|Normal scale affects the strength of the normal deviation from the normal texture.
+--texture-coat-normal=\<file path\>||Path to a texture file that sets the coat normal map.
+--coat-normal-scale=\<normal_scale\>|1.0|Coat normal scale affects the strength of the normal deviation from the coat normal texture.
 
 ## PostFX (OpenGL) options:
 Options|Description
