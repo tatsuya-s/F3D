@@ -8,6 +8,7 @@ endif()
 
 add_executable(f3d
   main.cxx
+  vtkF3DBlurBackgroundPass.cxx
   vtkF3DGenericImporter.cxx
   vtkF3DInteractorStyle.cxx
   vtkF3DMetaReader.cxx

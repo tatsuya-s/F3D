@@ -3,6 +3,7 @@
 #include "F3DLoader.h"
 #include "F3DOptions.h"
 
+#include "vtkF3DBlurBackgroundPass.h"
 #include "vtkF3DOpenGLGridMapper.h"
 
 #include <vtkAbstractArray.h>
@@ -327,6 +328,10 @@ void vtkF3DRenderer::SetupRenderPasses()
 
     renderingPass = cameraP;
   }
+
+  vtkNew<vtkF3DBlurBackgroundPass> blurP;
+  blurP->SetDelegatePass(renderingPass);
+  renderingPass = blurP;
 
   if (this->UseToneMappingPass)
   {
