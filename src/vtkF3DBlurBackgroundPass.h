@@ -51,20 +51,10 @@ public:
    */
   void ReleaseGraphicsResources(vtkWindow* w) override;
 
-  //@{
-  /**
-   * Get/Set the Gaussian sigma parameter.
-   * Default is 0.8
-   */
-  vtkGetMacro(Sigma, double);
-  vtkSetMacro(Sigma, double);
-  //@}
-
 protected:
   vtkF3DBlurBackgroundPass() = default;
   ~vtkF3DBlurBackgroundPass() override = default;
 
-  void ComputeKernel();
   void BuildBlurShader(vtkOpenGLRenderWindow* renWin);
 
   void RenderDelegate(const vtkRenderState* s, int w, int h);
@@ -73,14 +63,13 @@ protected:
   vtkTextureObject* ColorTexture = nullptr;
   vtkTextureObject* DepthTexture = nullptr;
 
-  vtkTextureObject* BlurredPass1 = nullptr;
+  vtkTextureObject* ColorTexture2 = nullptr;
 
   vtkOpenGLFramebufferObject* DelegateFBO = nullptr;
-  vtkOpenGLFramebufferObject* FirstPassFBO = nullptr;
+  vtkOpenGLFramebufferObject* TempFBO = nullptr;
 
   vtkOpenGLQuadHelper* QuadHelper = nullptr;
 
-  double Sigma = 1.8;
   std::vector<float> Kernel;
 
 private:

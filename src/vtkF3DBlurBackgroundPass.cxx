@@ -51,10 +51,10 @@ void vtkF3DBlurBackgroundPass::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << "(none)" << endl;
   }
-  os << indent << "FirstPassFBO:";
-  if (this->FirstPassFBO != nullptr)
+  os << indent << "TempFBO:";
+  if (this->TempFBO != nullptr)
   {
-    this->FirstPassFBO->PrintSelf(os, indent);
+    this->TempFBO->PrintSelf(os, indent);
   }
   else
   {
@@ -69,10 +69,10 @@ void vtkF3DBlurBackgroundPass::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << "(none)" << endl;
   }
-  os << indent << "BlurredPass1:";
-  if (this->BlurredPass1 != nullptr)
+  os << indent << "ColorTexture2:";
+  if (this->ColorTexture2 != nullptr)
   {
-    this->BlurredPass1->PrintSelf(os, indent);
+    this->ColorTexture2->PrintSelf(os, indent);
   }
   else
   {
@@ -87,42 +87,6 @@ void vtkF3DBlurBackgroundPass::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << "(none)" << endl;
   }
-}
-
-// ----------------------------------------------------------------------------
-void vtkF3DBlurBackgroundPass::ComputeKernel()
-{
-  constexpr float euler = 2.71828182845904523536;
-
-  this->Kernel.clear();
-
-  float kernelSum = 0.f;
-
-  while (this->Kernel.size() < 30)
-  {
-    float x = static_cast<float>(this->Kernel.size());
-    float power = -0.5 * x * x / (this->Sigma * this->Sigma);
-    float currentValue = std::pow(euler, power) / (this->Sigma * std::sqrt(2.0 * vtkMath::Pi()));
-    if (this->Kernel.size() > 0)
-    {
-      if (currentValue / this->Kernel[0] < 0.001)
-      {
-        break;
-      }
-      kernelSum += 2.f * currentValue;
-    }
-    else
-    {
-      kernelSum += currentValue;
-    }
-    this->Kernel.push_back(currentValue);
-  }
-
-  // normalize
-  std::transform(this->Kernel.begin(), this->Kernel.end(), this->Kernel.begin(),
-    [kernelSum](float v) { return v /= kernelSum; });
-
-  cout << "kernel size: " << this->Kernel.size() << endl;
 }
 
 // ----------------------------------------------------------------------------
@@ -141,56 +105,24 @@ void vtkF3DBlurBackgroundPass::BuildBlurShader(vtkOpenGLRenderWindow* renWin)
     std::stringstream ssDecl;
     ssDecl << "uniform sampler2D texColor;\n"
               "uniform sampler2D texDepth;\n"
-              "uniform vec2 direction;\n"
+              "uniform float offset;\n"
               "//VTK::FSQ::Decl";
 
     vtkShaderProgram::Substitute(FSSource, "//VTK::FSQ::Decl", ssDecl.str());
 
-    this->ComputeKernel();
-
     std::stringstream ssImpl;
     ssImpl << "  ivec2 size = textureSize(texColor, 0);\n"
-              "  vec4 center = texture(texColor, texCoord);\n"
-              "  if (texture(texDepth, texCoord).r < 0.999)\n"
-              "  {\n"
-              "    gl_FragData[0] = center;\n"
-              "  }\n"
-              "  else\n"
-              "  {\n"
-              "    vec2 op, om;\n"
-              "    vec4 cp, cm;\n"
-              "    float dp, dm;\n"
-              "    vec4 col = "
-           << this->Kernel[0] << " * center;\n";
-
-    for (int i = 1; i < this->Kernel.size(); i++)
-    {
-      ssImpl << "    op = texCoord + " << i << " * direction / size;\n"
-             << "    om = texCoord - " << i << " * direction / size;\n"
-             << "    cp = texture(texColor, op);\n"
-             << "    dp = texture(texDepth, op).r;\n"
-             << "    cm = texture(texColor, om);\n"
-             << "    dm = texture(texDepth, om).r;\n"
-             << "    if (dp > 0.999)\n"
-             << "    {\n"
-             << "      col += " << this->Kernel[i] << " * cp;\n"
-             << "    }\n"
-             << "    else\n"
-             << "    {\n"
-             << "      col += " << this->Kernel[i] << " * center;\n"
-             << "    }\n"
-             << "    if (dm > 0.999)\n"
-             << "    {\n"
-             << "      col += " << this->Kernel[i] << " * cm;\n"
-             << "    }\n"
-             << "    else\n"
-             << "    {\n"
-             << "      col += " << this->Kernel[i] << " * center;\n"
-             << "    }\n";
-    }
-
-    ssImpl << "    gl_FragData[0] = vec4(col.rgb, center.a);\n"
-              "  }\n"
+              "  vec2 step = (vec2(offset + 0.5)) / size;\n"
+              "  vec4 col1 = texture(texColor, texCoord + step);\n"
+              "  float depth1 = texture(texDepth, texCoord + step).r;\n"
+              "  vec4 col2 = texture(texColor, texCoord - step);\n"
+              "  float depth2 = texture(texColor, texCoord - step).r;\n"
+              "  step.x = -step.x;\n"
+              "  vec4 col3 = texture(texColor, texCoord + step);\n"
+              "  float depth3 = texture(texColor, texCoord + step).r;\n"
+              "  vec4 col4 = texture(texColor, texCoord - step);\n"
+              "  float depth4 = texture(texColor, texCoord - step).r;\n"
+              "  gl_FragData[0] = 0.25 * (col1 + col2 + col3 + col4);\n"
               "  gl_FragDepth = texture(texDepth, texCoord).r;\n";
 
     vtkShaderProgram::Substitute(FSSource, "//VTK::FSQ::Impl", ssImpl.str());
@@ -263,19 +195,23 @@ void vtkF3DBlurBackgroundPass::Render(const vtkRenderState* s)
     this->ColorTexture->SetDataType(GL_FLOAT);
     this->ColorTexture->SetMinificationFilter(vtkTextureObject::Linear);
     this->ColorTexture->SetMagnificationFilter(vtkTextureObject::Linear);
+    this->ColorTexture->SetWrapS(vtkTextureObject::MirroredRepeat);
+    this->ColorTexture->SetWrapT(vtkTextureObject::MirroredRepeat);
     this->ColorTexture->Allocate2D(w, h, 4, VTK_FLOAT);
   }
 
-  if (this->BlurredPass1 == nullptr)
+  if (this->ColorTexture2 == nullptr)
   {
-    this->BlurredPass1 = vtkTextureObject::New();
-    this->BlurredPass1->SetContext(renWin);
-    this->BlurredPass1->SetFormat(GL_RGBA);
-    this->BlurredPass1->SetInternalFormat(GL_RGBA32F);
-    this->BlurredPass1->SetDataType(GL_FLOAT);
-    this->BlurredPass1->SetMinificationFilter(vtkTextureObject::Linear);
-    this->BlurredPass1->SetMagnificationFilter(vtkTextureObject::Linear);
-    this->BlurredPass1->Allocate2D(w, h, 4, VTK_FLOAT);
+    this->ColorTexture2 = vtkTextureObject::New();
+    this->ColorTexture2->SetContext(renWin);
+    this->ColorTexture2->SetFormat(GL_RGBA);
+    this->ColorTexture2->SetInternalFormat(GL_RGBA32F);
+    this->ColorTexture2->SetDataType(GL_FLOAT);
+    this->ColorTexture2->SetMinificationFilter(vtkTextureObject::Linear);
+    this->ColorTexture2->SetMagnificationFilter(vtkTextureObject::Linear);
+    this->ColorTexture2->SetWrapS(vtkTextureObject::MirroredRepeat);
+    this->ColorTexture2->SetWrapT(vtkTextureObject::MirroredRepeat);
+    this->ColorTexture2->Allocate2D(w, h, 4, VTK_FLOAT);
   }
 
   if (this->DepthTexture == nullptr)
@@ -286,7 +222,7 @@ void vtkF3DBlurBackgroundPass::Render(const vtkRenderState* s)
   }
 
   this->ColorTexture->Resize(w, h);
-  this->BlurredPass1->Resize(w, h);
+  this->ColorTexture2->Resize(w, h);
   this->DepthTexture->Resize(w, h);
 
   if (this->DelegateFBO == nullptr)
@@ -302,14 +238,14 @@ void vtkF3DBlurBackgroundPass::Render(const vtkRenderState* s)
     renWin->GetState()->PopFramebufferBindings();
   }
 
-  if (this->FirstPassFBO == nullptr)
+  if (this->TempFBO == nullptr)
   {
-    this->FirstPassFBO = vtkOpenGLFramebufferObject::New();
-    this->FirstPassFBO->SetContext(renWin);
+    this->TempFBO = vtkOpenGLFramebufferObject::New();
+    this->TempFBO->SetContext(renWin);
     renWin->GetState()->PushFramebufferBindings();
-    this->FirstPassFBO->Bind();
-    this->FirstPassFBO->AddColorAttachment(0, this->BlurredPass1);
-    this->FirstPassFBO->ActivateDrawBuffers(1);
+    this->TempFBO->Bind();
+    this->TempFBO->AddColorAttachment(0, this->ColorTexture2);
+    this->TempFBO->ActivateDrawBuffers(1);
     renWin->GetState()->PopFramebufferBindings();
   }
 
@@ -323,35 +259,58 @@ void vtkF3DBlurBackgroundPass::Render(const vtkRenderState* s)
 
   this->BuildBlurShader(renWin);
 
-  float dirx[2] = { 1.f, 0.f };
-  float diry[2] = { 0.f, 1.f };
-
-  // first blur pass
-  renWin->GetState()->PushFramebufferBindings();
-  this->FirstPassFBO->Bind();
-  this->FirstPassFBO->StartNonOrtho(w, h);
-
   this->ColorTexture->Activate();
+  this->ColorTexture2->Activate();
   this->DepthTexture->Activate();
+
+  // pass 1
+  renWin->GetState()->PushFramebufferBindings();
+  this->TempFBO->Bind();
+  this->TempFBO->StartNonOrtho(w, h);
   this->QuadHelper->Program->SetUniformi("texColor", this->ColorTexture->GetTextureUnit());
   this->QuadHelper->Program->SetUniformi("texDepth", this->DepthTexture->GetTextureUnit());
-  this->QuadHelper->Program->SetUniform2f("direction", dirx);
-
+  this->QuadHelper->Program->SetUniformf("offset", 0);
   this->QuadHelper->Render();
-
-  this->ColorTexture->Deactivate();
-
   renWin->GetState()->PopFramebufferBindings();
 
-  // second blur pass
-  this->BlurredPass1->Activate();
-  this->QuadHelper->Program->SetUniformi("texColor", this->BlurredPass1->GetTextureUnit());
-  this->QuadHelper->Program->SetUniform2f("direction", diry);
+  // pass 2
+  renWin->GetState()->PushFramebufferBindings();
+  this->DelegateFBO->Bind();
+  this->DelegateFBO->StartNonOrtho(w, h);
+  this->QuadHelper->Program->SetUniformi("texColor", this->ColorTexture2->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformi("texDepth", this->DepthTexture->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformf("offset", 1);
+  this->QuadHelper->Render();
+  renWin->GetState()->PopFramebufferBindings();
 
+  // pass 3
+  renWin->GetState()->PushFramebufferBindings();
+  this->TempFBO->Bind();
+  this->TempFBO->StartNonOrtho(w, h);
+  this->QuadHelper->Program->SetUniformi("texColor", this->ColorTexture->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformi("texDepth", this->DepthTexture->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformf("offset", 1);
+  this->QuadHelper->Render();
+  renWin->GetState()->PopFramebufferBindings();
+
+  // pass 4
+  renWin->GetState()->PushFramebufferBindings();
+  this->DelegateFBO->Bind();
+  this->DelegateFBO->StartNonOrtho(w, h);
+  this->QuadHelper->Program->SetUniformi("texColor", this->ColorTexture2->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformi("texDepth", this->DepthTexture->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformf("offset", 2);
+  this->QuadHelper->Render();
+  renWin->GetState()->PopFramebufferBindings();
+
+  // final pass
+  this->QuadHelper->Program->SetUniformi("texColor", this->ColorTexture->GetTextureUnit());
+  this->QuadHelper->Program->SetUniformf("offset", 3);
   this->QuadHelper->Render();
 
   this->DepthTexture->Deactivate();
-  this->BlurredPass1->Deactivate();
+  this->ColorTexture->Deactivate();
+  this->ColorTexture2->Deactivate();
 
   vtkOpenGLCheckErrorMacro("failed after Render");
 }
@@ -371,20 +330,20 @@ void vtkF3DBlurBackgroundPass::ReleaseGraphicsResources(vtkWindow* w)
     this->DelegateFBO->Delete();
     this->DelegateFBO = nullptr;
   }
-  if (this->FirstPassFBO)
+  if (this->TempFBO)
   {
-    this->FirstPassFBO->Delete();
-    this->FirstPassFBO = nullptr;
+    this->TempFBO->Delete();
+    this->TempFBO = nullptr;
   }
   if (this->ColorTexture)
   {
     this->ColorTexture->Delete();
     this->ColorTexture = nullptr;
   }
-  if (this->BlurredPass1)
+  if (this->ColorTexture2)
   {
-    this->BlurredPass1->Delete();
-    this->BlurredPass1 = nullptr;
+    this->ColorTexture2->Delete();
+    this->ColorTexture2 = nullptr;
   }
   if (this->DepthTexture)
   {
