@@ -384,10 +384,23 @@ void F3DLoader::LoadFile(int load)
   }
 
   timer->StartTimer();
+
+  vtkNew<vtkCallbackCommand> streamingCallback;
+  streamingCallback->SetClientData(this->Renderer);
+  streamingCallback->SetCallback(
+    [](vtkObject*, unsigned long, void* clientData, void*) {
+      vtkF3DRenderer* ren = static_cast<vtkF3DRenderer*>(clientData);
+      ren->SetupRenderPasses();
+      ren->vtkOpenGLRenderer::ResetCamera();
+      ren->GetRenderWindow()->Render();
+    });
+  this->Importer->AddObserver(vtkCommand::UpdateDataEvent, streamingCallback);
+
   this->Importer->Update();
 
   // we need to remove progress observer in order to hide the progress bar during animation
   this->Importer->RemoveObservers(vtkCommand::ProgressEvent);
+  this->Importer->RemoveObservers(vtkCommand::UpdateDataEvent);
 
   if (!this->Options.NoRender)
   {
