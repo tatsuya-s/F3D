@@ -3,7 +3,9 @@
 
 #include "vtkF3DObjectFactory.h"
 
-int main(int argc, char** argv)
+#include <android_native_app_glue.h>
+
+int main(int argc, char* argv[])
 {
 #if NDEBUG
   vtkObject::GlobalWarningDisplayOff();
@@ -26,3 +28,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   return main(__argc, __argv);
 }
 #endif
+
+void android_main(struct android_app* state)
+{
+  // Make sure glue isn't stripped.
+  //app_dummy();
+
+  int argc = 2;
+  char* argv[] = { "dummyExec", "test.obj" };
+
+  F3DLoader::AndroidState = state;
+
+  main(argc, argv);
+}

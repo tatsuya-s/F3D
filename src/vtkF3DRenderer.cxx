@@ -825,6 +825,9 @@ void vtkF3DRenderer::Render()
     this->CheatSheetNeedUpdate = false;
   }
 
+#ifdef __ANDROID_API__
+  this->Superclass::Render();
+#else
   if (!this->TimerVisible)
   {
     this->Superclass::Render();
@@ -859,6 +862,7 @@ void vtkF3DRenderer::Render()
   std::string str = std::to_string(fps);
   str += " fps";
   this->TimerActor->SetInput(str.c_str());
+#endif
 }
 
 //----------------------------------------------------------------------------

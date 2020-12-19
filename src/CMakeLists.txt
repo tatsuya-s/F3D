@@ -1,22 +1,33 @@
-# Generate F3DIcon.h
-add_executable(embed embed.cxx)
-target_link_libraries(embed PUBLIC VTK::IOImage)
+if(ANDROID)
+  # do Android stuff
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/android/libs/${CMAKE_ANDROID_ARCH_ABI})
 
-if(WIN32)
-  get_target_property(_confs VTK::IOImage IMPORTED_CONFIGURATIONS)
-  foreach(_conf ${_confs})
-    get_target_property(_runtime_path VTK::IOImage IMPORTED_LOCATION_${_conf})
-    get_filename_component(_runtime_dir ${_runtime_path} DIRECTORY)
-    list(APPEND CMAKE_MSVCIDE_RUN_PATH "${_runtime_dir}")
-  endforeach()
+  include_directories(
+      "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
+
+else()
+  # Generate F3DIcon.h
+  add_executable(embed embed.cxx)
+  target_link_libraries(embed PUBLIC VTK::IOImage)
+
+  if(WIN32)
+    get_target_property(_confs VTK::IOImage IMPORTED_CONFIGURATIONS)
+    foreach(_conf ${_confs})
+      get_target_property(_runtime_path VTK::IOImage IMPORTED_LOCATION_${_conf})
+      get_filename_component(_runtime_dir ${_runtime_path} DIRECTORY)
+      list(APPEND CMAKE_MSVCIDE_RUN_PATH "${_runtime_dir}")
+    endforeach()
+  endif()
+
+  add_custom_command(
+    OUTPUT F3DIcon.h
+    COMMAND $<TARGET_FILE:embed>
+      "${CMAKE_SOURCE_DIR}/resources/logo32.png"
+      "${CMAKE_CURRENT_BINARY_DIR}/F3DIcon.h"
+    DEPENDS embed)
+
+    set(ICON_HEADER ${CMAKE_CURRENT_BINARY_DIR}/F3DIcon.h)
 endif()
-
-add_custom_command(
-  OUTPUT F3DIcon.h
-  COMMAND $<TARGET_FILE:embed>
-    "${CMAKE_CURRENT_SOURCE_DIR}/../resources/logo32.png"
-    "${CMAKE_CURRENT_BINARY_DIR}/F3DIcon.h"
-  DEPENDS embed)
 
 # f3d
 if(WIN32)
@@ -28,7 +39,7 @@ if(APPLE)
   set(OSX_DELEGATE ${CMAKE_CURRENT_SOURCE_DIR}/F3DNSDelegate.mm)
 endif()
 
-add_executable(f3d
+add_library(f3d SHARED
   main.cxx
   vtkF3DConsoleOutputWindow.cxx
   vtkF3DGenericImporter.cxx
@@ -45,14 +56,15 @@ add_executable(f3d
   F3DLog.cxx
   F3DOffscreenRender.cxx
   F3DOptions.cxx
-  ${CMAKE_CURRENT_BINARY_DIR}/F3DIcon.h
+  ${CMAKE_ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+  ${ICON_HEADER}
   ${CMAKE_CURRENT_BINARY_DIR}/Config.cxx
   ${OSX_DELEGATE}
   ${WINDOWS_RC_FILE}
   ${WINDOWS_OUTPUT_WINDOW}
 )
 
-set_target_properties(f3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set_target_properties(f3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/libs/${CMAKE_ANDROID_ARCH_ABI}")
 
 set(F3D_STRICT_BUILD OFF CACHE BOOL "Use strict warning and errors flags for building F3D")
 mark_as_advanced(F3D_STRICT_BUILD)
@@ -119,7 +131,6 @@ set(F3D_MODULES
   VTK::InteractionStyle
   VTK::InteractionWidgets
   VTK::IOCityGML
-  VTK::IOExodus
   VTK::IOGeometry
   VTK::IOImage
   VTK::IOImport
@@ -159,3 +170,11 @@ target_link_libraries(f3d PUBLIC ${F3D_MODULES})
 install(TARGETS f3d
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   BUNDLE DESTINATION ".")
+
+# android
+include("${CMAKE_SOURCE_DIR}/cmake/android.apk.cmake" REQUIRED)
+
+#android_create_apk(f3d "org.kitware.f3d"
+#  "${CMAKE_BINARY_DIR}/apk"
+#  "${CMAKE_BINARY_DIR}/libs"
+#  "${CMAKE_SOURCE_DIR}/resources/android")

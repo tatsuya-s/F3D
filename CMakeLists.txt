@@ -26,7 +26,6 @@ find_package(VTK 9.0 REQUIRED
     InteractionStyle
     InteractionWidgets
     IOCityGML
-    IOExodus
     IOGeometry
     IOImage
     IOImport

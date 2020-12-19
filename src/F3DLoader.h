@@ -13,6 +13,8 @@
 #include "vtkF3DRenderer.h"
 #include "F3DAnimationManager.h"
 
+#include <android_native_app_glue.h>
+
 class vtkF3DRenderer;
 class vtkImporter;
 struct F3DOptions;
@@ -58,6 +60,8 @@ public:
 
   F3DLoader();
   ~F3DLoader();
+
+  static struct android_app* AndroidState;
 
 protected:
   static vtkSmartPointer<vtkImporter> GetImporter(

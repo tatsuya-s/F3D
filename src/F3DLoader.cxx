@@ -7,6 +7,7 @@
 #include "vtkF3DGenericImporter.h"
 #include "vtkStringArray.h"
 
+#include <vtkAndroidRenderWindowInteractor.h>
 #include <vtk3DSImporter.h>
 #include <vtkCallbackCommand.h>
 #include <vtkDoubleArray.h>
@@ -25,12 +26,16 @@
 
 #include <algorithm>
 
+#ifndef __ANDROID_API__
 #include "F3DIcon.h"
+#endif
 
 typedef struct ProgressDataStruct {
     vtkTimerLog* timer;
     vtkProgressBarWidget* widget;
 } ProgressDataStruct;
+
+struct android_app* F3DLoader::AndroidState = nullptr;
 
 //----------------------------------------------------------------------------
 F3DLoader::F3DLoader() = default;
@@ -49,7 +54,8 @@ int F3DLoader::Start(int argc, char** argv)
   this->Renderer = vtkSmartPointer<vtkF3DRenderer>::New();
   this->RenWin = vtkSmartPointer<vtkRenderWindow>::New();
 
-  vtkNew<vtkRenderWindowInteractor> interactor;
+  vtkNew<vtkAndroidRenderWindowInteractor> interactor;
+  interactor->SetAndroidApplication(AndroidState);
   if (!options.NoRender)
   {
     this->RenWin->SetSize(options.WindowSize[0], options.WindowSize[1]);
@@ -100,7 +106,7 @@ int F3DLoader::Start(int argc, char** argv)
     this->Renderer->Initialize(options, "");
     this->RenWin->SetWindowName(f3d::AppTitle.c_str());
 
-#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK(9, 0, 20200615)
+#if defined(__ANDROID_API__) && VTK_VERSION_NUMBER >= VTK_VERSION_CHECK(9, 0, 20200615)
     // set icon
     vtkNew<vtkImageData> icon;
     icon->SetDimensions(F3DIconDimX, F3DIconDimY, 1);
