@@ -302,10 +302,6 @@ conf:win:vtk9:
     - configure:win
   needs:
     - configure:win
-  artifacts:
-    paths:
-      - dependencies
-      - build
 
 build:win:
   extends:
@@ -314,6 +310,10 @@ build:win:
     - conf:win
   needs:
     - conf:win
+  artifacts:
+    paths:
+      - dependencies
+      - build
 
 build:win:vtk9:
   extends:
@@ -338,7 +338,7 @@ test:win:vtk9:
   extends:
     - .windows_empty
   needs:
-    - build:win
+    - build:win:vtk9
 
 pack:win:
   extends:
@@ -359,7 +359,7 @@ pack:win:vtk9:
   extends:
     - .windows_empty
   needs:
-    - build:win
+    - build:win:vtk9
 
 ########## MacOS Specific ##########
 
