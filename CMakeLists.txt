@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 include(CMakeDependentOption)
 
+message("value ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+
 project(f3d
   VERSION "1.1.0"
   DESCRIPTION "F3D - A fast and minimalist 3D viewer"

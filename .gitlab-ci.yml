@@ -37,6 +37,7 @@ stages:
   tags:
     - windows
     - f3d
+    - hera
 
 .windows_env:
   before_script:
