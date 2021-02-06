@@ -227,18 +227,19 @@ pack:linux:
 .deps:win:
   stage: deps
   script:
-    - mkdir dependencies
-    - Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-win64-x64.zip -OutFile .\cmake-3.19.3-win64-x64.zip
-    - $CmakeHash = (Get-FileHash .\cmake-3.19.3-win64-x64.zip -Algorithm MD5).Hash
-    - $CmakeHash -eq "6bbe95ee440c42ddd249f356d3ebd056"
-    - Expand-Archive -LiteralPath .\cmake-3.19.3-win64-x64.zip -DestinationPath .\dependencies
     - $env:GIT_LFS_SKIP_SMUDGE="1"
     - git clone https://gitlab.kitware.com/f3d/f3d-dependencies.git
     - cd f3d-dependencies
     - git lfs pull --include "windows/archive/nsis-3.06.1.zip"
     - git lfs pull --include "windows/archive/$VTK_ARCHIVE"
     - cd ..\
+    - mkdir dependencies
+    - $ProgressPreference = 'SilentlyContinue'
+    - wget https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-win64-x64.zip
+    - $CmakeHash = (Get-FileHash .\cmake-3.19.3-win64-x64.zip -Algorithm MD5).Hash
+    - $CmakeHash -eq "6bbe95ee440c42ddd249f356d3ebd056"
     - cd dependencies
+    - tar -xf ..\cmake-3.19.3-win64-x64.zip
     - cmake -E tar -x ../f3d-dependencies/windows/archive/nsis-3.06.1.zip
     - cmake -E tar -x ../f3d-dependencies/windows/archive/$VTK_ARCHIVE
   extends:
