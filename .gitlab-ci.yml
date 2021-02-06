@@ -43,7 +43,8 @@ stages:
   before_script:
     - $CMAKEPath = Join-Path -Path $pwd -ChildPath dependencies\cmake-3.19.3-win64-x64\bin\
     - $NSISPath = Join-Path -Path $pwd -ChildPath dependencies\nsis-3.06.1\Bin\
-    - $env:Path += ";$NSISPath;$CMAKEPath"
+    - $NinjaPath =  Join-Path -Path $pwd -ChildPath dependencies\
+    - $env:Path += ";$NinjaPath;$NSISPath;$CMAKEPath"
 
 .windows_empty:
   script:
@@ -240,9 +241,13 @@ pack:linux:
     - Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-win64-x64.zip -OutFile .\cmake-3.19.3-win64-x64.zip 
     - $CmakeHash = (Get-FileHash .\cmake-3.19.3-win64-x64.zip -Algorithm MD5).Hash
     - $CmakeHash -eq "6bbe95ee440c42ddd249f356d3ebd056"
+    - Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v1.10.2/ninja-win.zip -OutFile .\ninja-win.zip 
+    - $NinjaHash = (Get-FileHash .\ninja-win.zip -Algorithm MD5).Hash
+    - $NinjaHash -eq "8DAD6A63141D57AAE277E68EF7658CA1"
     - mkdir dependencies
     - cd dependencies
     - tar -xf ..\cmake-3.19.3-win64-x64.zip
+    - cmake -E tar -x ../ninja-win.zip
     - cmake -E tar -x ../f3d-dependencies/windows/archive/nsis-3.06.1.zip
     - cmake -E tar -x ../f3d-dependencies/windows/archive/$VTK_ARCHIVE
   extends:
@@ -272,7 +277,7 @@ deps:win:vtk9:
     - .windows
     - .windows_env
   variables:
-    BUILD_ARCHITECTURE: -Ax64
+    BUILD_ARCHITECTURE: -GNinja #TODO
     ADDITIONAL_OPTIONS: -DWINDOWS_BUILD_WIN32=ON -DCMAKE_SYSTEM_VERSION=10.0.19042
     POLICY_OPTION: -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
     RUNTIME_OPTION: -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
