@@ -445,7 +445,6 @@ conf:macos:vtk9:
     - .macos
     - .macos_env
     - .build
-  artifacts:
 
 build:macos:
   extends:
@@ -454,9 +453,10 @@ build:macos:
     - conf:macos
   needs:
     - conf:macos
-  paths:
-    - dependencies
-    - build
+  artifacts:
+    paths:
+      - dependencies
+      - build
 
 build:macos:vtk9:
   extends:
