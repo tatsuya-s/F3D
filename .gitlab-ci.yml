@@ -1,11 +1,11 @@
 ########## Stages ##########
 
 stages:
-  - deps
+  - deps # Empty for linux
   - configure
   - build
-  - test
-  - package
+  - test # Empty for vtk9
+  - package # Empty for vtk9
 
 ########## OS specific tags and variables ##########
 
@@ -224,6 +224,8 @@ pack:linux:
 
 ########## Windows Specific ##########
 
+### Deps Windows ###
+
 .deps:win:
   stage: deps
   script:
@@ -261,6 +263,8 @@ deps:win:vtk9:
   variables:
     VTK_ARCHIVE: vtk-9.0.1.zip
 
+### Configure Windows ###
+
 .conf:win:
   extends:
     - .conf
@@ -293,6 +297,8 @@ conf:win:vtk9:
   needs:
     - deps:win:vtk9
 
+### Build Windows ###
+
 .build:win:
   extends:
     - .windows
@@ -323,6 +329,8 @@ build:win:vtk9:
   needs:
     - conf:win:vtk9
 
+### Test Windows ###
+
 test:win:
   extends:
     - .windows
@@ -339,6 +347,8 @@ test:win:vtk9:
     - .windows_empty
   needs:
     - build:win:vtk9
+
+### Package Windows ###
 
 pack:win:
   extends:
@@ -362,6 +372,8 @@ pack:win:vtk9:
     - build:win:vtk9
 
 ########## MacOS Specific ##########
+
+### Deps MacOS ###
 
 .deps:macos:
   stage: deps
@@ -394,6 +406,8 @@ deps:macos:vtk9:
   variables:
     VTK_ARCHIVE: vtk-9.0.1.tar.gz
 
+### Configure MacOS ###
+
 .conf:macos:
   extends:
     - .macos
@@ -423,6 +437,8 @@ conf:macos:vtk9:
   needs:
     - deps:macos:vtk9
 
+### Build MacOS ###
+
 .build:macos:
   extends:
     - .macos
@@ -449,6 +465,8 @@ build:macos:vtk9:
   needs:
     - conf:macos:vtk9
 
+### Test MacOS ###
+
 test:macos:
   extends:
     - .macos
@@ -465,6 +483,8 @@ test:macos:vtk9:
     - .macos_empty
   needs:
     - build:macos:vtk9
+
+### Package MacOS ###
 
 pack:macos:
   extends:
