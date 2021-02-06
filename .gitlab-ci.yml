@@ -401,7 +401,7 @@ deps:macos:vtk9:
     - .conf
   variables:
     ADDITIONAL_OPTIONS: -DMACOSX_BUILD_BUNDLE=ON
-    VTK_DIR: dependencies\vtk_install\lib\cmake\vtk-9.0\ # this should be ../dependencies, wtf is going on ?
+    VTK_DIR: dependencies\vtk_install\lib\cmake\vtk-9.0\ # this should be ../dependencies, TODO understand
   artifacts:
     paths:
       - dependencies
@@ -429,9 +429,6 @@ conf:macos:vtk9:
     - .macos_env
     - .build
   artifacts:
-    paths:
-      - dependencies
-      - build
 
 build:macos:
   extends:
@@ -440,6 +437,9 @@ build:macos:
     - conf:macos
   needs:
     - conf:macos
+  paths:
+    - dependencies
+    - build
 
 build:macos:vtk9:
   extends:
@@ -464,7 +464,7 @@ test:macos:vtk9:
   extends:
     - .macos_empty
   needs:
-    - build:macos
+    - build:macos:vtk9
 
 pack:macos:
   extends:
@@ -484,4 +484,4 @@ pack:macos:vtk9:
   extends:
     - .macos_empty
   needs:
-    - build:macos
+    - build:macos:vtk9
