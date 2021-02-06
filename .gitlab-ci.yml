@@ -37,7 +37,6 @@ stages:
   tags:
     - windows
     - f3d
-    - nemesis
 
 .windows_env:
   before_script:
