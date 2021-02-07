@@ -232,6 +232,8 @@ pack:linux:
 .deps:win:
   stage: deps
   script:
+    - ls "C:\Program Files\"
+    - ls "C:\Program Files (x86)\"
     - $env:GIT_LFS_SKIP_SMUDGE="1"
     - git clone https://gitlab.kitware.com/f3d/f3d-dependencies.git
     - cd f3d-dependencies
