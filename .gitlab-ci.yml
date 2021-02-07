@@ -44,8 +44,6 @@ stages:
     - $NSISPath = Join-Path -Path $pwd -ChildPath dependencies\nsis-3.06.1\Bin\
     - $NinjaPath =  Join-Path -Path $pwd -ChildPath dependencies\
     - $env:Path += ";$NinjaPath;$NSISPath;$CMAKEPath"
-    - cmd.exe /c "call `"${VS160COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat`" x64 && set > .\vcvars.txt" 
-    - Get-Content ".\vcvars.txt" | Foreach-Object { if ($_ -match "^(.*?)=(.*)$") {  Set-Content "env:\$($matches[1])" $matches[2] } }
 
 .windows_empty:
   script:
