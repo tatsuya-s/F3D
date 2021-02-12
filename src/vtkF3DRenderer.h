@@ -137,6 +137,11 @@ public:
   vtkSetVector3Macro(RightVector, double);
   //@}
 
+  /**
+   * Overriden to handle HDRI cache
+   */
+  void SetEnvironmentTexture(vtkTexture* texture, bool isSRGB = false) override;
+
 protected:
   vtkF3DRenderer();
   ~vtkF3DRenderer() override;

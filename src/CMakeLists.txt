@@ -42,6 +42,7 @@ add_executable(f3d
   vtkF3DRenderer.cxx
   vtkF3DRendererWithColoring.cxx
   F3DAnimationManager.cxx
+  F3DFileSystem.cxx
   F3DLoader.cxx
   F3DLog.cxx
   F3DOffscreenRender.cxx

@@ -1,6 +1,8 @@
 #include "vtkF3DRenderer.h"
 
+#include "F3DFileSystem.h"
 #include "F3DLog.h"
+
 #include "vtkF3DOpenGLGridMapper.h"
 #include "vtkF3DRenderPass.h"
 
@@ -9,6 +11,7 @@
 #include <vtkCamera.h>
 #include <vtkCornerAnnotation.h>
 #include <vtkCullerCollection.h>
+#include <vtkDataArray.h>
 #include <vtkImageData.h>
 #include <vtkImageReader2.h>
 #include <vtkImageReader2Factory.h>
@@ -17,6 +20,7 @@
 #include <vtkOpenGLFXAAPass.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLTexture.h>
+#include <vtkPointData.h>
 #include <vtkProperty.h>
 #include <vtkRenderWindow.h>
 #include <vtkTextActor.h>
@@ -24,6 +28,7 @@
 #include <vtkToneMappingPass.h>
 #include <vtkVersion.h>
 #include <vtksys/SystemTools.hxx>
+#include <vtksys/MD5.h>
 
 #if F3D_HAS_RAYTRACING
 #include <vtkOSPRayRendererNode.h>
@@ -776,4 +781,35 @@ void vtkF3DRenderer::DumpSceneState()
   F3DLog::Print(
     F3DLog::Severity::Info, "Camera focal point: ", focal[0], ",", focal[1], ",", focal[2]);
   F3DLog::Print(F3DLog::Severity::Info, "Camera view up: ", up[0], ",", up[1], ",", up[2], "\n");
+}
+
+//----------------------------------------------------------------------------
+void vtkF3DRenderer::SetEnvironmentTexture(vtkTexture* texture, bool vtkNotUsed(isSRGB))
+{
+  // get raw data
+  vtkDataArray* hdriDataArray = texture->GetInput()->GetPointData()->GetScalars();
+  vtkIdType hdriDataSize = hdriDataArray->GetDataSize() * hdriDataArray->GetDataTypeSize();
+  void* hdriPtr = hdriDataArray->GetVoidPointer(0);
+
+  // compute the md5
+  char hdriHash[33];
+  vtksysMD5* hash = vtksysMD5_New();
+  vtksysMD5_Initialize(hash);
+  vtksysMD5_Append(hash, reinterpret_cast<unsigned char*>(hdriPtr), hdriDataSize);
+  vtksysMD5_FinalizeHex(hash, hdriHash);
+  hdriHash[32] = '\0';
+
+  F3DLog::Print(F3DLog::Severity::Info, "Hash = ", hdriHash);
+
+  std::string cacheHDRI = F3DFileSystem::GetUserCacheDirectory() + hdriHash;
+
+  // Is cached
+  if (vtksys::SystemTools::PathExists(cacheHDRI))
+  {
+    // load specular map and spherical harmonics from cache
+  }
+  else
+  {
+    this->Superclass::SetEnvironmentTexture(texture);
+  }
 }
