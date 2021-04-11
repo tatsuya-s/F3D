@@ -51,6 +51,7 @@ endif()
 option(F3D_MODULE_RAYTRACING "Raytracing module" OFF)
 option(F3D_MODULE_EXODUS "ExodusII module" ON)
 option(F3D_MODULE_OCCT "OpenCASCADE module (STEP and IGES files)" OFF)
+option(F3D_MODULE_ASSIMP "Assimp module" OFF)
 
 set(F3D_VTK_MODULES
   VTK::CommonSystem

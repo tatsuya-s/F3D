@@ -1,5 +1,7 @@
 #include "F3DLoader.h"
 
+#include "Config.h"
+
 #include "F3DLog.h"
 #include "F3DNSDelegate.h"
 #include "F3DOffscreenRender.h"
@@ -31,6 +33,10 @@
 #include <algorithm>
 
 #include "F3DIcon.h"
+
+#if F3D_MODULE_ASSIMP
+#include "vtkF3DAssimpImporter.h"
+#endif
 
 typedef struct ProgressDataStruct {
     vtkTimerLog* timer;

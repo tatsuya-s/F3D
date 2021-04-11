@@ -59,6 +59,14 @@ if(F3D_MODULE_OCCT)
   endif()
 endif()
 
+if(F3D_MODULE_ASSIMP)
+  find_package(assimp 5.0 REQUIRED)
+  if(assimp_FOUND)
+    set(MODULES_SPECIFIC_SOURCE_FILES ${MODULES_SPECIFIC_SOURCE_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/vtkF3DAssimpImporter.cxx")
+    set(MODULES_SPECIFIC_LIBRARIES ${MODULES_SPECIFIC_LIBRARIES} assimp::assimp)
+  endif()
+endif()
+
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/Config.h"
@@ -99,6 +107,10 @@ declare_f3d_reader(F3DVTKXMLReader)
 
 if(F3D_MODULE_OCCT)
   declare_f3d_reader(F3DOpenCascadeReader)
+endif()
+
+if(F3D_MODULE_ASSIMP)
+  declare_f3d_reader(F3DAssimpReader)
 endif()
 
 if(F3D_MODULE_EXODUS)
