@@ -20,11 +20,39 @@
 #include "vtkUniforms.h"
 #include "vtksys/SystemTools.hxx"
 
+#include "ofbx.h"
+
 vtkStandardNewMacro(vtkF3DFBXImporter);
+
+class vtkF3DFBXImporterInternals
+{
+public:
+  void ConvertMatrix(const ofbx::Matrix& in, vtkMatrix4x4* out)
+  {
+    for (int i = 0; i < 16; i++)
+    {
+      out->SetElement(i%4, i/4, in.m[i]);
+    }
+  }
+
+  ofbx::IScene* Scene = nullptr;
+};
+
+//------------------------------------------------------------------------------
+vtkF3DFBXImporter::vtkF3DFBXImporter()
+{
+  this->Internals = new vtkF3DFBXImporterInternals;
+}
 
 //------------------------------------------------------------------------------
 vtkF3DFBXImporter::~vtkF3DFBXImporter()
 {
+  if (this->Internals->Scene)
+  {
+    this->Internals->Scene->destroy();
+  }
+
+  delete this->Internals;
   this->SetFileName(nullptr);
 }
 
@@ -38,13 +66,82 @@ int vtkF3DFBXImporter::ImportBegin()
     return 0;
   }
 
+  std::ifstream in(this->FileName);
+  std::vector<char> contents((std::istreambuf_iterator<char>(in)),
+    std::istreambuf_iterator<char>());
+
+  const ofbx::u8* data = reinterpret_cast<ofbx::u8*>(contents.data());
+
+  this->Internals->Scene = ofbx::load(data, contents.size(), 0);
+
   return 1;
 }
 
 //------------------------------------------------------------------------------
 void vtkF3DFBXImporter::ImportActors(vtkRenderer* renderer)
 {
+  if (this->Internals->Scene)
+  {
+    int nbMeshes = this->Internals->Scene->getMeshCount();
 
+    for (int i = 0; i < nbMeshes; i++)
+    {
+      const ofbx::Mesh* mesh = this->Internals->Scene->getMesh(i);
+      const ofbx::Geometry* geometry = mesh->getGeometry();
+
+      // points
+      vtkNew<vtkPolyData> polyData;
+      vtkNew<vtkPoints> points;
+
+      int nbPoints = geometry->getVertexCount();
+      const ofbx::Vec3* fbxPoints = geometry->getVertices();
+
+      points->SetNumberOfPoints(nbPoints);
+
+      for (int j = 0; j < nbPoints; j++)
+      {
+        const ofbx::Vec3& p = fbxPoints[j];
+        points->SetPoint(j, p.x, p.y, p.z);
+      }
+
+      // faces
+      vtkNew<vtkCellArray> cells;
+
+      int nbIndices = geometry->getIndexCount();
+      const int* fbxIndices = geometry->getFaceIndices();
+
+      vtkNew<vtkIdList> poly;
+
+      for (int j = 0; j < nbIndices; j++)
+      {
+        if (fbxIndices[j] < 0)
+        {
+          poly->InsertNextId(-fbxIndices[j]-1);
+          cells->InsertNextCell(poly);
+          poly->Reset();
+        }
+        else
+        {
+          poly->InsertNextId(fbxIndices[j]);
+        }
+      }
+
+      polyData->SetPoints(points);
+      polyData->SetPolys(cells);
+
+      vtkNew<vtkPolyDataMapper> mapper;
+      mapper->SetInputData(polyData);
+
+      vtkNew<vtkActor> actor;
+      actor->SetMapper(mapper);
+
+      vtkNew<vtkMatrix4x4> matrix;
+      this->Internals->ConvertMatrix(mesh->getGeometricMatrix(), matrix);
+      actor->SetUserMatrix(matrix);
+
+      renderer->AddActor(actor);
+    }
+  }
 }
 
 //----------------------------------------------------------------------------

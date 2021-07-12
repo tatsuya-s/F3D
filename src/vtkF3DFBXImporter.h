@@ -15,6 +15,8 @@
 #include "vtkImporter.h"
 #include "vtkSmartPointer.h" // For SmartPointer
 
+class vtkF3DFBXImporterInternals;
+
 class vtkF3DFBXImporter : public vtkImporter
 {
 public:
@@ -64,13 +66,15 @@ public:
     double timeRange[2], vtkDoubleArray* timeSteps) override;
 
 protected:
-  vtkF3DFBXImporter() = default;
+  vtkF3DFBXImporter();
   ~vtkF3DFBXImporter() override;
 
   int ImportBegin() override;
   void ImportActors(vtkRenderer* renderer) override;
 
   char* FileName = nullptr;
+
+  vtkF3DFBXImporterInternals* Internals;
 
 private:
   vtkF3DFBXImporter(const vtkF3DFBXImporter&) = delete;
