@@ -59,6 +59,13 @@ if(F3D_MODULE_OCCT)
   endif()
 endif()
 
+if(F3D_MODULE_FBX)
+  add_subdirectory(external/openfbx)
+  set(MODULES_SPECIFIC_SOURCE_FILES ${MODULES_SPECIFIC_SOURCE_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/vtkF3DFBXImporter.cxx")
+  set(MODULES_SPECIFIC_INCLUDE_DIRS ${MODULES_SPECIFIC_INCLUDE_DIRS} external/openfbx)
+  set(MODULES_SPECIFIC_LIBRARIES ${MODULES_SPECIFIC_LIBRARIES} openfbx)
+endif()
+
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/Config.h"
@@ -103,6 +110,10 @@ endif()
 
 if(F3D_MODULE_EXODUS)
   declare_f3d_reader(F3DExodusIIReader)
+endif()
+
+if(F3D_MODULE_FBX)
+  declare_f3d_reader(F3DFBXReader)
 endif()
 
 # Generate the code of the F3DReaderInstantiator class
