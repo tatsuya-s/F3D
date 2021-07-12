@@ -104,6 +104,66 @@ void vtkF3DFBXImporter::ImportActors(vtkRenderer* renderer)
         points->SetPoint(j, p.x, p.y, p.z);
       }
 
+      // normals
+      const ofbx::Vec3* fbxNormals = geometry->getNormals();
+
+      if (fbxNormals)
+      {
+        vtkNew<vtkDoubleArray> normals;
+        normals->SetNumberOfComponents(3);
+        normals->SetNumberOfTuples(nbPoints);
+        normals->SetName("Normals");
+
+        for (int j = 0; j < nbPoints; j++)
+        {
+          const ofbx::Vec3& n = fbxNormals[j];
+          double tuple[] = { n.x, n.y, n.z };
+          normals->SetTypedTuple(j, tuple);
+        }
+
+        polyData->GetPointData()->SetNormals(normals);
+      }
+
+      // Tangents
+      const ofbx::Vec3* fbxTangents = geometry->getTangents();
+
+      if (fbxTangents)
+      {
+        vtkNew<vtkDoubleArray> tangents;
+        tangents->SetNumberOfComponents(3);
+        tangents->SetNumberOfTuples(nbPoints);
+        tangents->SetName("Tangents");
+
+        for (int j = 0; j < nbPoints; j++)
+        {
+          const ofbx::Vec3& t = fbxTangents[j];
+          double tuple[] = { t.x, t.y, t.z };
+          tangents->SetTypedTuple(j, tuple);
+        }
+
+        polyData->GetPointData()->SetTangents(tangents);
+      }
+
+      // uvs
+      const ofbx::Vec2* fbxUVs = geometry->getUVs();
+
+      if (fbxUVs)
+      {
+        vtkNew<vtkDoubleArray> uvs;
+        uvs->SetNumberOfComponents(2);
+        uvs->SetNumberOfTuples(nbPoints);
+        uvs->SetName("uvs");
+
+        for (int j = 0; j < nbPoints; j++)
+        {
+          const ofbx::Vec2& uv = fbxUVs[j];
+          double tuple[] = { uv.x, uv.y };
+          uvs->SetTypedTuple(j, tuple);
+        }
+
+        polyData->GetPointData()->SetTCoords(uvs);
+      }
+
       // faces
       vtkNew<vtkCellArray> cells;
 
