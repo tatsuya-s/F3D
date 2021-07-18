@@ -149,6 +149,8 @@ void vtkF3DRenderer::Initialize(const F3DOptions& options, const std::string& fi
       cam->SetFocalPoint(0.0, 0.0, 0.0);
       cam->SetPosition(pos);
       cam->SetViewUp(this->UpVector);
+      cam->Azimuth(this->Options.CameraAzimuthAngle);
+      cam->Elevation(this->Options.CameraElevationAngle);
 
       this->SetEnvironmentUp(this->UpVector);
       this->SetEnvironmentRight(this->RightVector);
